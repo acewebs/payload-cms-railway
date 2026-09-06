@@ -1,0 +1,15 @@
+.git
+.github
+.next
+node_modules
+media
+docs
+*.md
+!README.md
+.env
+.env.*
+.vscode
+.idea
+Dockerfile
+.dockerignore
+docker-compose.yml

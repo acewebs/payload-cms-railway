@@ -1,43 +1,49 @@
-version: '3'
-
 services:
-  payload:
-    image: node:20-alpine
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: payload
+      POSTGRES_PASSWORD: payload
+      POSTGRES_DB: payload
     ports:
-      - '3000:3000'
+      - '${POSTGRES_PORT:-5432}:5432'
     volumes:
-      - .:/home/node/app
-      - node_modules:/home/node/app/node_modules
-    working_dir: /home/node/app/
-    command: sh -c "corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm dev"
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U payload']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Optional. Only start this if you want to exercise the S3 upload path locally:
+  #   docker compose --profile s3 up -d
+  # Then uncomment the S3_* block in your .env.
+  minio:
+    image: minio/minio:latest
+    profiles: ['s3']
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: payload
+      MINIO_ROOT_PASSWORD: payloadpayload
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - miniodata:/data
+
+  createbucket:
+    image: minio/mc:latest
+    profiles: ['s3']
     depends_on:
-      - mongo
-      # - postgres
-    env_file:
-      - .env
-
-  # Ensure your DATABASE_URL uses 'mongo' as the hostname ie. mongodb://mongo/my-db-name
-  mongo:
-    image: mongo:latest
-    ports:
-      - '27017:27017'
-    command:
-      - --storageEngine=wiredTiger
-    volumes:
-      - data:/data/db
-    logging:
-      driver: none
-
-  # Uncomment the following to use postgres
-  # postgres:
-  #   restart: always
-  #   image: postgres:latest
-  #   volumes:
-  #     - pgdata:/var/lib/postgresql/data
-  #   ports:
-  #     - "5432:5432"
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 payload payloadpayload; do sleep 1; done;
+      mc mb --ignore-existing local/payload-media;
+      "
 
 volumes:
-  data:
-  # pgdata:
-  node_modules:
+  pgdata:
+  miniodata:

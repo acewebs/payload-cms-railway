@@ -33,6 +33,7 @@
     "target": "ES2022"
   },
   "include": [
+    ".railway/**/*.ts",
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",

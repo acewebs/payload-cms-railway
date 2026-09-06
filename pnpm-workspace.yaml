@@ -1,0 +1,11 @@
+# pnpm reads settings from here rather than from a "pnpm" field in package.json.
+# allowBuilds is the pnpm 11 name; onlyBuiltDependencies is kept for pnpm 10.
+allowBuilds:
+  esbuild: true
+  sharp: true
+  unrs-resolver: true
+
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
+  - unrs-resolver
