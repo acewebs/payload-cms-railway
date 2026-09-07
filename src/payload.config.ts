@@ -14,9 +14,9 @@ import { allowedOrigins, isProduction, resolveS3Settings } from './lib/env'
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
-// Railway Buckets are private, so the S3 plugin is only enabled when a bucket is
-// actually wired up. Without it Payload falls back to disk storage, which is what
-// local development uses. A half-configured bucket throws instead, see resolveS3Settings.
+// Null when no bucket is configured, which is how local development runs: the
+// plugin is registered either way but switched off, and Payload falls back to
+// disk storage. A half-configured bucket throws instead, see resolveS3Settings.
 const s3 = resolveS3Settings()
 
 if (!s3 && isProduction) {
@@ -60,9 +60,8 @@ export default buildConfig({
   }),
   sharp,
   plugins: [
-    // Registered unconditionally, and switched off when no bucket is configured.
-    //
-    // It must not be conditional. Payload regenerates the admin import map during
+    // Registered unconditionally and switched off when no bucket is configured,
+    // rather than registered conditionally. Payload regenerates the import map during
     // `next build`, from whatever environment the build runs in. The Railway image
     // is built without bucket credentials, so a conditional plugin is absent at
     // build time and its client component never reaches the import map, then the

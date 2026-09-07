@@ -90,9 +90,10 @@ const runPayloadMigrate = () =>
 /**
  * Payload writes a batch -1 row when it builds a schema by dev push. `payload
  * migrate` then asks for confirmation before running, and that prompt ignores
- * --force-accept-warning (checked in @payloadcms/drizzle 3.88.0), so with stdin
- * closed it would exit 0 and silently skip every migration. Refuse instead: a
- * production database should never have been pushed to.
+ * --force-accept-warning (checked in @payloadcms/drizzle 3.88.0). With stdin
+ * closed it has no answer to read, so it hangs or dies on the unanswered prompt
+ * instead of migrating. Refuse up front with a reason: a production database
+ * should never have been pushed to.
  */
 const assertNotDevPushed = async (client) => {
   const { rows } = await client.query(
