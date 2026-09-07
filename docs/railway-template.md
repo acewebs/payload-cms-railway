@@ -102,34 +102,25 @@ you already deployed from hides most of the failures that only happen cold.
 
 ## Marketplace copy
 
-Title:
+Name, 30 characters:
 
 ```text
-Payload CMS 3 - Production Ready
+Payload CMS 3 Production Ready
 ```
 
-Short description:
+Short description, 69 of the 72 characters available:
 
 ```text
-Production-ready Payload CMS with PostgreSQL and persistent Railway S3 storage. Zero-config deployment, migrations, health checks and automatic environment configuration included.
+Backend foundation, zero config: PostgreSQL, bucket media, migrations
 ```
 
-Long description:
+The two are written to divide the work. The name wins the search and stakes the
+claim; the description never repeats it, and spends its budget on what the name
+cannot say. "Backend foundation" is deliberate: the Payload template with the
+most deploys in the marketplace is a website builder, and this is the opposite of
+that. Do not swap it for "minimal", which reads as unfinished next to
+"Production Ready", or for "starter", which is what this template positions
+against.
 
-```text
-Deploy Payload CMS 3 on Railway with a production-ready PostgreSQL database and persistent Railway Storage Bucket.
-
-Unlike basic Payload starters, this template includes production database migrations, persistent S3 media storage, automatic secret and URL configuration, health checks and a production Docker build.
-
-After deployment, simply open /admin and create your first admin account.
-
-Included:
-- Payload CMS 3
-- PostgreSQL
-- Railway Storage Bucket
-- Persistent media uploads
-- Production migrations
-- Health checks
-- Automatic environment configuration
-- Minimal Users + Media starter schema
-```
+The long listing body is in [marketplace-listing.md](marketplace-listing.md),
+following Railway's required section structure.
