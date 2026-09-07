@@ -1,70 +1,66 @@
 # Deploy and Host Payload CMS 3 Production Ready on Railway
 
-Payload is an open-source TypeScript headless CMS with an admin panel, REST and
-GraphQL APIs, and your schema defined in code. This template is the production
-wiring around it: PostgreSQL, durable storage for uploads, real migrations and a
-healthcheck, already connected. Users and media only, so you build your schema
-rather than delete someone else's.
+Payload CMS 3 Production Ready is a zero-config, Railway-native foundation for building with Payload. It deploys Payload CMS with PostgreSQL, persistent media storage, production migrations, and health checks already wired together. The starter stays intentionally minimal — just Users and Media — so you can build your schema instead of removing someone else's.
 
 ## About Hosting Payload CMS 3 Production Ready
 
-Payload runs as a Next.js server, so hosting it takes more than starting a
-container. It needs a database it can reach privately, somewhere durable for
-uploaded files, and a way to apply schema changes before the new version serves
-traffic. The last two are where self-hosted Payload usually goes wrong: a
-container filesystem is ephemeral, so uploads written to disk vanish on the next
-deploy, and pushing schema changes to a live database is fine in development and
-dangerous in production. This template settles both. Migrations run from the
-entrypoint before the server starts, so a failed migration fails the deploy
-rather than leaving an app in front of a schema it does not understand.
+Payload 3 runs inside Next.js and needs more than a database to be production-ready. Uploaded files need durable storage outside the application container, database schema changes need controlled migrations, and all services need to be connected correctly.
+
+This template handles that infrastructure for you. Railway provisions PostgreSQL and a Storage Bucket, connects them automatically over the appropriate Railway networking, generates the Payload secret, and configures the application with no deploy-form setup required.
+
+Migrations run before the server starts, and uploaded media is stored in the Railway Bucket rather than the ephemeral application filesystem.
 
 ## Common Use Cases
 
-- A content API behind a web or mobile app, consumed over REST or GraphQL
-- The back office for a product, where editors need an admin panel and your
-  application needs the same data over an API
-- A starting point for a custom Payload build: add collections, access control,
-  hooks and background jobs on top of infrastructure that is already correct
-- A headless CMS for a frontend deployed separately, on Railway or anywhere else
+- **Headless CMS backend** for web or mobile applications using Payload's REST or GraphQL APIs
+- **Application back office** where editors manage the same structured data your product consumes
+- **Foundation for a custom Payload project** with your own collections, access control, hooks, jobs, and integrations
+- **CMS for a separately deployed frontend**, whether hosted on Railway or elsewhere
 
 ## Dependencies for Payload CMS 3 Production Ready Hosting
 
-- PostgreSQL, provisioned by this template and reached over Railway's private
-  network
-- A Railway Storage Bucket, provisioned by this template, holding every upload
-  so media survives redeploys and restarts
+- **PostgreSQL** — provisioned automatically and connected to Payload over Railway's private network
+- **Railway Storage Bucket** — provisioned automatically for persistent media uploads across deployments and restarts
 
-Both are created and connected automatically. There is nothing to fill in on the
-deploy form, and no credentials to copy: the database URL and all five bucket
-variables are wired as references, and the Payload secret is generated for you.
+Both services are created and connected automatically. There are no credentials to copy and nothing to fill in on the deploy form. Database and bucket credentials are wired using Railway variable references, and `PAYLOAD_SECRET` is generated automatically.
 
 ### Implementation Details
 
-Migrations are applied by the container entrypoint, ahead of the server, and are
-safe to run on more than one replica at once. The script waits for Postgres to
-accept connections, since on a cold deploy the database may still be starting,
-then takes a Postgres advisory lock so two replicas cannot apply the same
-migration twice:
+#### Production-safe migrations
+
+Database migrations run before the application server starts:
 
 ```bash
-node scripts/migrate.mjs   # wait for Postgres, lock, migrate
+node scripts/migrate.mjs
 exec next start -H 0.0.0.0 -p "${PORT:-3000}"
 ```
 
-Railway buckets are private, which is a feature rather than a limitation: files
-are streamed through Payload at `/api/media/file/<filename>` and governed by the
-`read` access function on the media collection, so access control is yours to
-tighten rather than something you have to bolt on.
+The migration runner waits for PostgreSQL to become available and uses a PostgreSQL advisory lock before applying migrations. This prevents multiple application replicas from attempting to apply the same migration concurrently.
 
-Adding your own content types is the normal Payload workflow, plus one command:
+If a migration fails, the deployment fails instead of starting the application against an incompatible database schema.
 
-```bash
-pnpm generate:types      # after editing a collection
-pnpm migrate:create      # commit the migration it writes
+#### Persistent private media
+
+Railway Storage Buckets are private. Uploaded files are streamed through Payload at:
+
+```text
+/api/media/file/{filename}
 ```
 
-The deploy applies it. Local development uses a Postgres container and writes
-uploads to disk, so you never need bucket credentials on your machine.
+This means media access remains under Payload's access-control system rather than requiring a publicly exposed storage bucket.
+
+#### Adding your own schema
+
+The template intentionally includes only `Users` and `Media`. Add collections using the normal Payload workflow, then generate types and create a migration:
+
+```bash
+pnpm generate:types
+pnpm migrate:create
+```
+
+Commit the generated migration with your schema changes. It will be applied automatically on the next deployment.
+
+Local development uses PostgreSQL in Docker and stores uploads locally, so Railway Bucket credentials are not required on your development machine.
 
 ## Why Deploy Payload CMS 3 Production Ready on Railway?
 

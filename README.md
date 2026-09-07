@@ -10,6 +10,18 @@ configure between clicking deploy and creating your first admin user.
 This is deliberately not a website starter. There are no pages, posts, forms or
 demo content to delete: just `users` and `media`, and room for your own schema.
 
+Payload runs inside Next.js, so hosting it takes more than starting a container.
+Uploaded files need durable storage outside the container, schema changes need
+controlled migrations, and the pieces need to be connected to each other. Those
+are the parts this template owns, and they are the parts a self-hosted Payload
+usually gets wrong: a container filesystem is ephemeral, so uploads written to
+disk vanish on the next deploy, and pushing schema changes straight to a live
+database is fine in development and dangerous in production.
+
+Published on the Railway marketplace as
+[Payload CMS 3 Production Ready](https://railway.com/deploy/payload-cms-3-production-ready).
+The listing copy is mirrored in [docs/marketplace-listing.md](docs/marketplace-listing.md).
+
 ## What is included
 
 |                         |                                                                               |
@@ -25,7 +37,7 @@ demo content to delete: just `users` and `media`, and room for your own schema.
 
 ## Deploy to Railway
 
-[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/REPLACE_WITH_TEMPLATE_CODE)
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/payload-cms-3-production-ready)
 
 Railway creates three things: this application, a PostgreSQL database and a
 storage bucket. Every variable the application needs is filled in from those two,
