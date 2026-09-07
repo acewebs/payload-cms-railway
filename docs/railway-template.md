@@ -100,6 +100,54 @@ you already deployed from hides most of the failures that only happen cold.
 - [ ] Adding a custom domain does not break the admin panel
 - [ ] Upgrading Payload and deploying the resulting migration works
 
+## Variable descriptions
+
+Railway will not publish a template until every required variable has one. The
+Postgres wording below is Railway's own, copied from their published `postgres`
+template so ours reads consistently with it.
+
+Payload CMS service:
+
+```text
+DATABASE_URL          Connection to the Postgres service in this project. Set for you.
+PAYLOAD_SECRET        Signs authentication tokens and session cookies. Generated on
+                      deploy. Changing it signs every user out.
+S3_BUCKET             Bucket that uploaded media is written to. Set from the Bucket in
+                      this project, so uploads survive redeploys and restarts.
+S3_ENDPOINT           S3 API endpoint for the bucket. Set from the Bucket in this
+                      project rather than hardcoded, because it can differ per bucket.
+S3_REGION             Region the bucket was created in. Set from the Bucket in this
+                      project. A bucket cannot be moved to another region later.
+S3_ACCESS_KEY_ID      Access key ID for the bucket. Set from the Bucket in this project.
+S3_SECRET_ACCESS_KEY  Secret access key for the bucket. Set from the Bucket in this
+                      project.
+```
+
+Postgres service:
+
+```text
+DATABASE_URL                         URL to connect to Postgres database.
+PGDATA                               Location where the database will be initialized
+PGDATABASE                           Required variable for the data panel.
+PGHOST                               Railway Private Domain Name.
+PGPASSWORD                           Required variable for Data panel
+PGPORT                               Port to connect to Postgres.
+PGUSER                               Required variable for Data panel
+POSTGRES_DB                          Default database created when image is started.
+POSTGRES_PASSWORD                    Password to connect to DB
+POSTGRES_USER                        User to connect to Postgres DB
+RAILWAY_DEPLOYMENT_DRAINING_SECONDS  Allow Postgres to cleanly shut down
+SSL_CERT_DAYS                        SSL certificate expiry in days.
+```
+
+## Listing category
+
+File it under **CMS**, not Starters. Payload is a headless CMS and this ships all
+of it: admin panel, REST and GraphQL, auth, media, access control. The website
+template that other listings build on is a demo site on top of the CMS, not what
+makes it one. CMS is also where anyone shopping for Payload looks, and filing
+something called Production Ready under Starters invites a reader to discount it.
+
 ## Marketplace copy
 
 Name, 30 characters:
