@@ -1,4 +1,4 @@
-import { defineRailway, github, postgres, preserve, project, service } from 'railway/iac'
+import { bucket, defineRailway, github, postgres, preserve, project, service } from 'railway/iac'
 
 /**
  * The application and its database, with their variables wired between them.
@@ -19,8 +19,19 @@ import { defineRailway, github, postgres, preserve, project, service } from 'rai
  * Applying this owns the environment: resources absent from this file are
  * deleted. Do not point it at a project that has anything else in it.
  */
+// Must match the region passed to scripts/railway-bucket.sh. Change both together,
+// before first deploy: sjc (US West), iad (US East), ams (EU West), sin (Asia Pacific).
+const BUCKET_REGION = 'ams'
+
 export default defineRailway((ctx) => {
   const db = postgres('Postgres')
+
+  // Declared so that `railway config apply` adopts the bucket instead of offering
+  // to delete it, but NOT created here: a bucket() declaration reports success and
+  // creates nothing (Railway CLI 5.49.2), which is why scripts/railway-bucket.sh
+  // exists. That script names its bucket 'Bucket' and takes the same region, and
+  // the two must agree: a region cannot be changed after the bucket is created.
+  const media = bucket('Bucket', { region: BUCKET_REGION })
 
   const payload = service('Payload CMS', {
     source: github('acewebs/payload-cms-railway', { branch: 'main' }),
@@ -53,6 +64,6 @@ export default defineRailway((ctx) => {
   })
 
   return project('payload-cms', {
-    resources: [payload, db],
+    resources: [payload, db, media],
   })
 })

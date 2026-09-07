@@ -21,7 +21,8 @@ set -euo pipefail
 
 SERVICE="${SERVICE:-Payload CMS}"
 RAILWAY="${RAILWAY:-railway}"
-REGION="${1:-}"
+# Defaults to the region declared in .railway/railway.ts. Keep them in step.
+REGION="${1:-ams}"
 
 if ! command -v "$RAILWAY" >/dev/null 2>&1; then
   echo "error: the railway CLI is not on PATH. See https://docs.railway.com/cli" >&2
@@ -50,6 +51,14 @@ name="$(comm -13 <(printf '%s\n' "$before" | sort) <(printf '%s\n' "$after" | so
 if [ -z "$name" ]; then
   echo "error: could not work out the new bucket's name. Check 'railway bucket list'." >&2
   exit 1
+fi
+
+# Match the name .railway/railway.ts declares, so a later `railway config apply`
+# adopts this bucket rather than offering to delete it.
+if [ "$name" != "Bucket" ]; then
+  echo "==> renaming $name to Bucket"
+  "$RAILWAY" bucket rename -b "$name" -n Bucket
+  name="Bucket"
 fi
 
 echo "==> wiring $name into '$SERVICE'"
