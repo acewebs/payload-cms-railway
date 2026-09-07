@@ -64,7 +64,11 @@ const runPayloadMigrate = () =>
   new Promise((resolve, reject) => {
     const bin = path.join(process.cwd(), 'node_modules', '.bin', 'payload')
     const child = spawn(bin, ['migrate'], {
-      stdio: 'inherit',
+      // stdin is deliberately closed. `payload migrate` prompts in some states
+      // and a container cannot answer, so inheriting stdin risks hanging until
+      // the healthcheck gives up. The states that would prompt are caught
+      // explicitly below, before we get here.
+      stdio: ['ignore', 'inherit', 'inherit'],
       env: {
         ...process.env,
         NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --no-deprecation`.trim(),
@@ -83,6 +87,33 @@ const runPayloadMigrate = () =>
     })
   })
 
+/**
+ * Payload writes a batch -1 row when it builds a schema by dev push. `payload
+ * migrate` then asks for confirmation before running, and that prompt ignores
+ * --force-accept-warning (checked in @payloadcms/drizzle 3.88.0), so with stdin
+ * closed it would exit 0 and silently skip every migration. Refuse instead: a
+ * production database should never have been pushed to.
+ */
+const assertNotDevPushed = async (client) => {
+  const { rows } = await client.query(
+    "SELECT 1 FROM information_schema.tables WHERE table_name = 'payload_migrations'",
+  )
+
+  if (rows.length === 0) {
+    return
+  }
+
+  const marker = await client.query('SELECT 1 FROM payload_migrations WHERE batch = -1 LIMIT 1')
+
+  if (marker.rows.length > 0) {
+    throw new Error(
+      'this database was built by Payload dev push, not by migrations. Running migrations ' +
+        'against it would need an interactive confirmation that a container cannot give. Point ' +
+        'the service at a database that has only ever been migrated.',
+    )
+  }
+}
+
 const client = await connect()
 let keepalive
 
@@ -96,6 +127,8 @@ try {
     })
   }, KEEPALIVE_MS)
   keepalive.unref()
+
+  await assertNotDevPushed(client)
 
   console.log('[migrate] running payload migrate')
   await runPayloadMigrate()

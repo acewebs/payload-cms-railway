@@ -60,24 +60,31 @@ export default buildConfig({
   }),
   sharp,
   plugins: [
-    ...(s3
-      ? [
-          s3Storage({
-            collections: {
-              media: true,
-            },
-            bucket: s3.bucket,
-            config: {
-              credentials: {
-                accessKeyId: s3.accessKeyId,
-                secretAccessKey: s3.secretAccessKey,
-              },
-              endpoint: s3.endpoint,
-              forcePathStyle: s3.forcePathStyle,
-              region: s3.region,
-            },
-          }),
-        ]
-      : []),
+    // Registered unconditionally, and switched off when no bucket is configured.
+    //
+    // It must not be conditional. Payload regenerates the admin import map during
+    // `next build`, from whatever environment the build runs in. The Railway image
+    // is built without bucket credentials, so a conditional plugin is absent at
+    // build time and its client component never reaches the import map, then the
+    // admin panel renders nothing at runtime where the bucket does exist.
+    // alwaysInsertFields keeps the collection schema identical either way, so
+    // migrations do not depend on the environment that generated them.
+    s3Storage({
+      collections: {
+        media: true,
+      },
+      alwaysInsertFields: true,
+      bucket: s3?.bucket ?? '',
+      config: {
+        credentials: {
+          accessKeyId: s3?.accessKeyId ?? '',
+          secretAccessKey: s3?.secretAccessKey ?? '',
+        },
+        endpoint: s3?.endpoint,
+        forcePathStyle: s3?.forcePathStyle ?? false,
+        region: s3?.region ?? 'auto',
+      },
+      enabled: Boolean(s3),
+    }),
   ],
 })

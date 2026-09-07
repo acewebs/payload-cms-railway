@@ -142,7 +142,9 @@ pnpm migrate:status   # show which migrations have run
 Migrations are applied by `scripts/migrate.mjs` rather than the bare CLI. It
 waits for Postgres to accept connections (on a cold deploy the database may still
 be booting) and takes a Postgres advisory lock first, so scaling to several
-replicas cannot run the same migration twice. Set `RUN_MIGRATIONS=false` on the
+replicas cannot run the same migration twice. It also refuses to run against a
+database whose schema was created by development push, because `payload migrate`
+asks for confirmation in that case and a container has no way to answer. Set `RUN_MIGRATIONS=false` on the
 service if you would rather run them yourself.
 
 ## Media uploads
