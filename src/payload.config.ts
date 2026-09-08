@@ -52,6 +52,13 @@ export default buildConfig({
       // Bounded so a stalled database surfaces as an error rather than as requests
       // queueing forever on a checkout that never completes.
       connectionTimeoutMillis: 10000,
+      // statement_timeout only binds a query the server is actually processing, so
+      // on a pooled client whose socket died without a reset, the usual shape after
+      // a database restart, it never fires. query_timeout bounds the same wait on
+      // this side; idleTimeoutMillis reaps the stale clients rather than handing
+      // them to the next caller.
+      query_timeout: 10000,
+      idleTimeoutMillis: 30000,
       max: Number(process.env.DATABASE_POOL_MAX || 10),
     },
     migrationDir: path.resolve(dirname, 'migrations'),

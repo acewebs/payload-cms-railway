@@ -8,7 +8,7 @@ const QUERY_TIMEOUT_MS = 5000
 
 type PoolClient = {
   query: (text: string) => Promise<unknown>
-  release: () => void
+  release: (destroy?: boolean) => void
 }
 
 type Pool = {
@@ -50,17 +50,34 @@ export const GET = async () => {
       throw new Error('postgres pool not found on the database adapter')
     }
 
-    // The client is checked out explicitly, and the timeout is enforced by Postgres,
-    // so a stalled query cannot leave a connection checked out of the pool.
+    // Bounded by the pool's own connectionTimeoutMillis. Deliberately not by racing
+    // this promise against a timer: a lost race abandons the connect while it is
+    // still pending, and the client it eventually yields is checked out with nobody
+    // left to release it, so every timed-out probe would permanently cost the pool
+    // one client.
     const client = await pool.connect()
 
     try {
-      await client.query(`SET statement_timeout = ${QUERY_TIMEOUT_MS}`)
-      await client.query('SELECT 1')
-    } finally {
-      await client.query('SET statement_timeout = DEFAULT').catch(() => {})
-      client.release()
+      await withTimeout(
+        (async () => {
+          await client.query(`SET statement_timeout = ${QUERY_TIMEOUT_MS}`)
+          await client.query('SELECT 1')
+        })(),
+        QUERY_TIMEOUT_MS,
+        'database probe',
+      )
+    } catch (error) {
+      // Destroyed, not returned. The client may still be waiting on a reply that
+      // never comes, so handing it back would pass the fault to the next caller.
+      // Nothing is sent to reset statement_timeout either: that is another query on
+      // the same unresponsive connection, and awaiting it is how a bounded probe
+      // becomes an unbounded one.
+      client.release(true)
+      throw error
     }
+
+    await client.query('SET statement_timeout = DEFAULT').catch(() => {})
+    client.release()
 
     return Response.json({ status: 'ok' })
   } catch (error) {
