@@ -19,7 +19,7 @@ disk vanish on the next deploy, and pushing schema changes straight to a live
 database is fine in development and dangerous in production.
 
 Published on the Railway marketplace as
-[Payload CMS 3 Production Ready](https://railway.com/deploy/payload-cms-3-production-ready).
+[Payload CMS 3 Production Ready](https://railway.com/deploy/payload-cms-3-production-ready?referralCode=aceweb&utm_medium=integration&utm_source=template&utm_campaign=generic).
 The listing copy is mirrored in [docs/marketplace-listing.md](docs/marketplace-listing.md).
 
 ## What is included
@@ -37,7 +37,7 @@ The listing copy is mirrored in [docs/marketplace-listing.md](docs/marketplace-l
 
 ## Deploy to Railway
 
-[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/payload-cms-3-production-ready)
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/payload-cms-3-production-ready?referralCode=aceweb&utm_medium=integration&utm_source=template&utm_campaign=generic)
 
 Railway creates three things: this application, a PostgreSQL database and a
 storage bucket. Every variable the application needs is filled in from those two,
